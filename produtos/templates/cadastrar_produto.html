@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% block 'head' %}
+    <meta charset="UTF-8">
+    <title>Cadastrar Produto</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+{% endblock %}
+</head>
+<body>
+{% block 'conteudo' %}
+    <div style="text-align: center; margin-top: 60px;">
+        {% if messages %}
+            <br>
+            {% for message in messages %}
+                <div class="alert {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        <form action="{% url 'cadastrar_produto' %}" method="POST" enctype="multipart/form-data">{% csrf_token %}
+            <h1>Cadastro de Produto</h1>
+            <br>
+            <label>Nome:</label>
+            <p><input type="text" name="nome" placeholder="Nome..."></p>
+            <label>Categoria:</label>
+            <br>
+            <select name="categoria">
+                 <option selected>Selecione</option>
+                  {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}">{{ categoria }}</option>
+                  {% endfor %}
+            </select>
+            <br>
+            <br>
+            <label>Preço:</label>
+            <p><input type="number" name="preco" placeholder="Preço..."></p>
+            <label>Estoque:</label>
+            <p><input type="number" name="estoque" placeholder="Estoque..."></p>
+            <p><input type="file" name="arquivo" multiple/></p>
+            <button type="submit" class="btn btn-primary">Cadastrar</button>
+        </form>
+    </div>
+{% endblock %}
+</body>
+</html>
