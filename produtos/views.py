@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.shortcuts import get_object_or_404
 from .models import Produto, Categoria
@@ -29,55 +30,74 @@ def detalhe_produto(request, id):
         request.session.save()
     categorias = Categoria.objects.all()
     prod = Produto.objects.get(id=id)
-    return render(request, 'detalhe_produto.html', {'prod': prod,
-                                                    'carrinho': len(request.session['carrinho']),
-                                                    'categorias': categorias})
-
-
-
+    return render(
+        request,
+        'detalhe_produto.html',
+        {'produto': prod, 'carrinho': len(request.session['carrinho']), 'categorias': categorias},
+    )
 
 
 def add_carrinho(request):
-    # verifica se a session carrinho existe. Se não existir ele cria essa variável e salva
-    if not request.session.get('carrinho'):
-        request.session['carrinho'] = []
-        request.session.save()
-    # aqui está pegando tudo que foi enviado do formulário de detalhe_produto.html e convertendo para um dicionário do python
-    x = dict(request.POST)
+    carrinho = request.session.setdefault('carrinho', [])
+    items_carrinho = {
+        item["id_produto"]: item for item in carrinho
+    }
 
-    id = int(x['id'][0])
-    total = Produto.objects.filter(id=id)[0].preco
+    produto = Produto.objects.get(pk=request.POST["id"])
+    quantidade = int(request.POST["quantidade"])
 
+    try:
+        item = items_carrinho[produto.id]
+    except KeyError:  # produto ainda não existe no carrinho
+        item = {
+            'id_produto': produto.pk,
+            'preco': produto.preco,
+            'quantidade': quantidade,
+            'subtotal': quantidade * produto.preco
+        }
+        carrinho.append(item)
+    else:  # produto já existe, é necessário apenas atualizar
+        item['quantidade'] = int(item['quantidade']) + quantidade
+        item['subtotal'] = item['quantidade'] * produto.preco
 
-    total *= int(x['quantidade'][0])
-    data = {'id_produto': int(x['id'][0]),
-            'preco': total,
-            'quantidade': x['quantidade'][0]}
-
-    request.session['carrinho'].append(data)
     request.session.modified = True
-    # return HttpResponse(request.session['carrinho'])
-    return redirect('/ver_carrinho/')
+
+    return redirect('ver_carrinho')
 
 
 def ver_carrinho(request):
-    categorias = Categoria.objects.all()
-    dados_mostrar = []
-    for i in request.session['carrinho']:
-        prod = Produto.objects.filter(id=i['id_produto'])
-        dados_mostrar.append(
-            {'img': prod[0].img.url,
-             'nome': prod[0].nome,
-             'quantidade': i['quantidade'],
-             'preco': i['preco'],
-             'id': i['id_produto']
-             }
+    carrinho = request.session.get('carrinho', [])
+    items = []
+    for item in carrinho:
+        produto = Produto.objects.get(id=item['id_produto'])
+        items.append(
+            {
+                'img': produto.img.url,
+                'nome': produto.nome,
+                'quantidade': item['quantidade'],
+                'preco': Decimal(item['preco']),
+                'subtotal': Decimal(item['subtotal']),
+                'id': produto.id,
+            }
         )
-    total = sum([float(i['preco']) for i in request.session['carrinho']])
 
-    return render(request, 'ver_carrinho.html', {'dados': dados_mostrar,
-                                             'total': total,
-                                             'carrinho': len(request.session['carrinho']),
-                                             'categorias': categorias,
-                                        })
+    total = sum(
+        int(item['quantidade']) * Decimal(item['preco']) for item in carrinho
+    )
+    return render(
+        request,
+        'ver_carrinho.html',
+        {
+            'items': items,
+            'total': total,
+            'categorias': Categoria.objects.all(),
+        },
+    )
 
+
+def remover_carrinho(request, id):
+    carrinho = request.session.get('carrinho', [])
+    request.session['carrinho'] = [
+        item for item in carrinho if item['id_produto'] != id
+    ]
+    return redirect('ver_carrinho')

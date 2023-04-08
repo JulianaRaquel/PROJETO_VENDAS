@@ -2,46 +2,48 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  {% block 'head' %}
+  <head>
+    {% block 'head' %}
     <meta charset="UTF-8">
     <title>Title</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-  {% endblock %}
-</head>
-      <body>
-      {% block 'conteudo' %}
-          <br>
-          <br>
-          <div class="container">
-          <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Imagem</th>
-                  <th>Produto</th>
-                  <th>QTD.</th>
-                  <th>Sub total</th>
-                  <th>Remover</th>
-                </tr>
-              </thead>
-              <tbody>
-              {% for j, i in dados %}
-                <tr>
-                  <th><img src="{{i.imagem}}" width="50px"></th>
-                  <td>{{ i.nome }}</td>
-                  <td>{{ i.quantidade }}</td>
-                  <td>{{ i.preco }}0</td>
-                  <td><a href="{% url 'remover_carrinho' j%}" class="btn btn-danger">Remover</a></td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-            <h3>Frete: R$ {{ frete }}0</h3>
-            <h1 class="titulo">Total: </h1>
-            <h2 style="color: gray;">&nbsp R$ {{ total }}0</h2>
-            <a href="{% url 'finalizar_pedido' %}" class="btn btn-success">Finalizar compra</a>
-            <a href="{% url 'home' %}" class="btn btn-primary">Continuar comprando</a>
-          </div>
-      {% endblock %}
-      </body>
+    {% endblock %}
+  </head>
+  <body>
+    {% block 'conteudo' %}
+    <br>
+    <br>
+    <div class="container">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Imagem</th>
+            <th>Produto</th>
+            <th>QTD.</th>
+            <th>Sub total</th>
+            <th>Remover</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <th>
+              <img src="{{ item.img }}" width="50px">
+            </th>
+            <td>{{ item.nome }}</td>
+            <td>{{ item.quantidade }}</td>
+            <td>R$ {{ item.subtotal|floatformat:"2g" }}</td>
+            <td><a href="{% url 'remover_carrinho' item.id %}" class="btn btn-danger">Remover</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <h3>Frete: R$ {{ frete }}0</h3>
+      <h1 class="titulo">Total: </h1>
+      <h2 style="color: gray;">R$ {{ total|floatformat:"2g" }}</h2>
+      <a href="{% url 'finalizar_pedido' %}" class="btn btn-success">Finalizar compra</a>
+      <a href="{% url 'home' %}" class="btn btn-primary">Continuar comprando</a>
+    </div>
+    {% endblock %}
+  </body>
 </html>
